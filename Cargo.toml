@@ -1,0 +1,11 @@
+[package]
+name = "slice_2d"
+version = "0.1.0"
+authors = ["HareInWeed <zjnvv@163.com>"]
+edition = "2018"
+description = "helpers that manipulate slice as two-dimensional"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
