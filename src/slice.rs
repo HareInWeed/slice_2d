@@ -9,15 +9,15 @@ pub trait Slice2DShape {
     fn get_col(&self) -> usize;
 }
 
-pub trait ArrayRef<T> {
+pub trait ArrayPtr<T> {
     fn get_array(&self) -> *const T;
 }
 
-pub trait ArrayRefMut<T> {
+pub trait ArrayPtrMut<T> {
     fn get_array_mut(&self) -> *mut T;
 }
 
-#[derive(Hash, Debug, Clone, Eq, PartialEq)]
+#[derive(Hash, Debug, Clone)]
 pub struct Slice2DRaw<T> {
     array: *const T,
 
@@ -27,7 +27,12 @@ pub struct Slice2DRaw<T> {
 }
 
 impl<T> Slice2DRaw<T> {
-    fn from_raw_parts(array: *const T, array_col: usize, row: usize, col: usize) -> Slice2DRaw<T> {
+    unsafe fn from_raw_parts(
+        array: *const T,
+        array_col: usize,
+        row: usize,
+        col: usize,
+    ) -> Slice2DRaw<T> {
         Slice2DRaw {
             array,
             array_col,
@@ -39,7 +44,7 @@ impl<T> Slice2DRaw<T> {
 
 impl<T> Default for Slice2DRaw<T> {
     fn default() -> Self {
-        Self::from_raw_parts(null(), 0, 0, 0)
+        unsafe { Self::from_raw_parts(null(), 0, 0, 0) }
     }
 }
 
@@ -77,7 +82,7 @@ impl<T> Slice2DRawRef for Slice2DRaw<T> {
     }
 }
 
-#[derive(Hash, Clone, Eq, PartialEq, Default, Debug)]
+#[derive(Hash, Clone, Default, Debug)]
 pub struct Slice2D<'a, T> {
     raw: Slice2DRaw<T>,
     phantom: PhantomData<&'a T>,
@@ -89,10 +94,7 @@ impl<'a, T> Slice2D<'a, T> {
             row * col <= slice.len(),
             "slice does not contain enough space."
         );
-        Slice2D {
-            raw: Slice2DRaw::from_raw_parts(slice.as_ptr(), col, row, col),
-            phantom: PhantomData,
-        }
+        unsafe { Slice2D::<'b, T>::from_raw_parts(slice.as_ptr(), col, row, col) }
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *const T,
@@ -128,7 +130,7 @@ impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
     }
 }
 
-impl<'a, T> ArrayRef<T> for Slice2D<'a, T> {
+impl<'a, T> ArrayPtr<T> for Slice2D<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
@@ -146,10 +148,7 @@ impl<'a, T> Slice2DMut<'a, T> {
             row * col <= slice.len(),
             "slice does not contain enough space."
         );
-        Slice2DMut {
-            raw: Slice2DRaw::from_raw_parts(slice.as_ptr(), col, row, col),
-            phantom: PhantomData,
-        }
+        unsafe { Slice2DMut::<'b, T>::from_raw_parts(slice.as_mut_ptr(), col, row, col) }
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *mut T,
@@ -189,13 +188,13 @@ impl<'a, T> Slice2DMut<'a, T> {
     }
 }
 
-impl<'a, T> ArrayRef<T> for Slice2DMut<'a, T> {
+impl<'a, T> ArrayPtr<T> for Slice2DMut<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
 }
 
-impl<'a, T> ArrayRefMut<T> for Slice2DMut<'a, T> {
+impl<'a, T> ArrayPtrMut<T> for Slice2DMut<'a, T> {
     fn get_array_mut(&self) -> *mut T {
         self.raw.array as *mut T
     }
@@ -210,7 +209,7 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
     }
 }
 
-// because `Index` trait in Rust can only return reference,
+// because `Index` trait in Rust can only return reference for now,
 // we can not index a Slice2D with ranges
 impl<'a, T: 'a> Index<(usize, usize)> for Slice2D<'a, T> {
     type Output = T;
