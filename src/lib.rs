@@ -4,7 +4,10 @@ pub use slice::{Slice2D, Slice2DMut};
 
 #[cfg(test)]
 mod tests {
-    use crate::{slice::GetElemRef, slice::GetElemRefMut, Slice2D, Slice2DMut};
+    use crate::{
+        slice::{GetElemRef, GetElemRefMut, Shape2DExt, Split},
+        Slice2D, Slice2DMut,
+    };
     #[test]
     fn slice_2d_index() {
         const ROW: usize = 3;
@@ -232,13 +235,24 @@ mod tests {
 
     #[test]
     fn slice_2d_split() {
-        const ROW: usize = 3;
+        const ROW: usize = 4;
         const COL: usize = 5;
-        const RS: usize = 1;
-        const RE: usize = ROW - 1;
-        const CS: usize = 2;
-        const CE: usize = COL - 1;
+        const R: usize = 2;
+        const C: usize = 3;
         let v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
         let vs = Slice2D::from_slice(v.as_slice(), ROW, COL);
+        let [l, r] = vs.split_at_vertically(C);
+        assert_eq!(l.get_shape(), (ROW, C));
+        assert_eq!(r.get_shape(), (ROW, COL - C));
+
+        let [t, b] = vs.split_at_horizontally(R);
+        assert_eq!(t.get_shape(), (R, COL));
+        assert_eq!(b.get_shape(), (ROW - R, COL));
+
+        let [[tl, tr], [bl, br]] = vs.split_at((R, C));
+        assert_eq!(tl.get_shape(), (R, C));
+        assert_eq!(tr.get_shape(), (R, COL - C));
+        assert_eq!(bl.get_shape(), (ROW - R, C));
+        assert_eq!(br.get_shape(), (ROW - R, COL - C));
     }
 }

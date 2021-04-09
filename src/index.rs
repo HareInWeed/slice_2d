@@ -1,11 +1,11 @@
-use crate::slice::{ArrayPtr, ArrayPtrMut, Slice2D, Slice2DMut, Slice2DShape};
+use crate::slice::{Shape2D, Slice2D, Slice2DMut, SlicePtr, SlicePtrMut};
 use core::ops::{
     Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
 pub unsafe trait Slice2DIndex<'a, T, S>
 where
-    S: Slice2DShape + ArrayPtr<T> + ?Sized,
+    S: Shape2D + SlicePtr<T> + ?Sized,
 {
     type Ref: 'a;
     unsafe fn get_unchecked(self, slice: &'a S) -> Self::Ref;
@@ -15,7 +15,7 @@ where
 
 pub unsafe trait Slice2DIndexMut<'a, T, S>: Slice2DIndex<'a, T, S>
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> + ?Sized,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T> + ?Sized,
 {
     type RefMut: 'a;
     unsafe fn get_unchecked_mut(self, slice: &'a mut S) -> Self::RefMut;
@@ -24,7 +24,7 @@ where
 }
 
 #[inline(always)]
-fn calc_2d_index<S: Slice2DShape>(r: usize, c: usize, slice: &S) -> usize {
+fn calc_2d_index<S: Shape2D>(r: usize, c: usize, slice: &S) -> usize {
     r * slice.get_array_col() + c
 }
 
@@ -32,7 +32,7 @@ fn calc_2d_index<S: Slice2DShape>(r: usize, c: usize, slice: &S) -> usize {
 
 unsafe impl<'a, T: 'a, S> Slice2DIndex<'a, T, S> for (usize, usize)
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Shape2D + SlicePtr<T>,
 {
     type Ref = &'a T;
 
@@ -60,7 +60,7 @@ where
 
 unsafe impl<'a, T: 'a, S> Slice2DIndexMut<'a, T, S> for (usize, usize)
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
 {
     type RefMut = &'a mut T;
 
@@ -122,7 +122,7 @@ impl IRange for RangeFull {}
 // (RangeBounds, RangeBounds)
 unsafe impl<'a, T: 'a, S, B1, B2> Slice2DIndex<'a, T, S> for (B1, B2)
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Shape2D + SlicePtr<T>,
     B1: IRange,
     B2: IRange,
 {
@@ -162,7 +162,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (B, B)
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
     B: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;
@@ -202,7 +202,7 @@ where
 // (RangeBounds, usize)
 unsafe impl<'a, T: 'a, S, B> Slice2DIndex<'a, T, S> for (B, usize)
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Shape2D + SlicePtr<T>,
     B: IRange,
 {
     type Ref = Slice2D<'a, T>;
@@ -235,7 +235,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (B, usize)
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
     B: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;
@@ -269,7 +269,7 @@ where
 // (usize, RangeBounds)
 unsafe impl<'a, T: 'a, S, B> Slice2DIndex<'a, T, S> for (usize, B)
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Shape2D + SlicePtr<T>,
     B: IRange,
 {
     type Ref = Slice2D<'a, T>;
@@ -302,7 +302,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (usize, B)
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
     B: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;

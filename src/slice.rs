@@ -3,23 +3,35 @@ use core::marker::PhantomData;
 use core::ops::{Index, IndexMut};
 use core::ptr::null;
 
-pub trait Slice2DShape {
+pub trait Shape2D {
     fn get_array_col(&self) -> usize;
     fn get_row(&self) -> usize;
     fn get_col(&self) -> usize;
 }
+pub trait Shape2DExt: Shape2D {
+    fn get_shape(&self) -> (usize, usize);
+}
+impl<S> Shape2DExt for S
+where
+    S: Shape2D,
+{
+    #[inline(always)]
+    fn get_shape(&self) -> (usize, usize) {
+        (self.get_row(), self.get_col())
+    }
+}
 
-pub trait ArrayPtr<T> {
+pub trait SlicePtr<T> {
     fn get_array(&self) -> *const T;
 }
 
-pub trait ArrayPtrMut<T> {
+pub trait SlicePtrMut<T> {
     fn get_array_mut(&self) -> *mut T;
 }
 
 impl<'a, T, S> GetElemRefMut<'a, T> for S
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
 {
     fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
     where
@@ -35,7 +47,7 @@ where
     }
 }
 
-pub trait SplitSlice2D<'a, T>: GetElemRef<'a, T> {
+pub trait Split<'a, T>: GetElemRef<'a, T> {
     fn split_at_vertically(&'a self, j: usize) -> [Slice2D<'a, T>; 2] {
         [
             self.get((.., ..j)).expect("out of boundary"),
@@ -99,7 +111,7 @@ pub trait Slice2DRawRef {
     fn get_slice_2d_raw(&self) -> &Slice2DRaw<Self::DataT>;
 }
 
-impl<T, S> Slice2DShape for S
+impl<T, S> Shape2D for S
 where
     S: Slice2DRawRef<DataT = T>,
 {
@@ -162,12 +174,12 @@ impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
         &self.raw
     }
 }
-impl<'a, T> ArrayPtr<T> for Slice2D<'a, T> {
+impl<'a, T> SlicePtr<T> for Slice2D<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
 }
-impl<'a, T> SplitSlice2D<'a, T> for Slice2D<'a, T> {}
+impl<'a, T> Split<'a, T> for Slice2D<'a, T> {}
 
 #[derive(Hash, Default, Debug)]
 pub struct Slice2DMut<'a, T> {
@@ -195,12 +207,12 @@ impl<'a, T> Slice2DMut<'a, T> {
         }
     }
 }
-impl<'a, T> ArrayPtr<T> for Slice2DMut<'a, T> {
+impl<'a, T> SlicePtr<T> for Slice2DMut<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
 }
-impl<'a, T> ArrayPtrMut<T> for Slice2DMut<'a, T> {
+impl<'a, T> SlicePtrMut<T> for Slice2DMut<'a, T> {
     fn get_array_mut(&self) -> *mut T {
         self.raw.array as *mut T
     }
@@ -213,10 +225,10 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
         &self.raw
     }
 }
-impl<'a, T> SplitSlice2D<'a, T> for Slice2DMut<'a, T> {}
+impl<'a, T> Split<'a, T> for Slice2DMut<'a, T> {}
 
 // get trait
-pub trait GetElemRef<'a, T>: Sized + Slice2DShape + ArrayPtr<T> {
+pub trait GetElemRef<'a, T>: Sized + Shape2D + SlicePtr<T> {
     fn get<I>(&'a self, index: I) -> Option<I::Ref>
     where
         I: Slice2DIndex<'a, T, Self>;
@@ -225,7 +237,7 @@ pub trait GetElemRef<'a, T>: Sized + Slice2DShape + ArrayPtr<T> {
         I: Slice2DIndex<'a, T, Self>;
 }
 
-pub trait GetElemRefMut<'a, T>: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> {
+pub trait GetElemRefMut<'a, T>: Shape2D + SlicePtr<T> + SlicePtrMut<T> {
     fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
     where
         I: Slice2DIndexMut<'a, T, Self>;
@@ -236,7 +248,7 @@ pub trait GetElemRefMut<'a, T>: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> {
 
 impl<'a, T, S> GetElemRef<'a, T> for S
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Shape2D + SlicePtr<T>,
 {
     fn get<I>(&'a self, index: I) -> Option<I::Ref>
     where
