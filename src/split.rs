@@ -1,5 +1,6 @@
 use crate::{
-    slice::{GetElemRef, Shape2D, Slice2D, Slice2DMut, SlicePtr, SlicePtrMut},
+    index::GetElemRef,
+    slice::{Shape2D, Slice2D, Slice2DMut, SlicePtr, SlicePtrMut},
     utils::calc_2d_index,
 };
 
@@ -64,13 +65,13 @@ where
             unsafe {
                 Some([
                     Slice2DMut::from_raw_parts(
-                        self.get_array_mut(),
+                        self.get_slice_mut(),
                         self.get_array_col(),
                         self.get_row(),
                         j,
                     ),
                     Slice2DMut::from_raw_parts(
-                        self.get_array_mut().add(calc_2d_index(0, j, self)),
+                        self.get_slice_mut().add(calc_2d_index(0, j, self)),
                         self.get_array_col(),
                         self.get_row(),
                         self.get_col() - j,
@@ -86,13 +87,13 @@ where
             unsafe {
                 Some([
                     Slice2DMut::from_raw_parts(
-                        self.get_array_mut(),
+                        self.get_slice_mut(),
                         self.get_array_col(),
                         i,
                         self.get_col(),
                     ),
                     Slice2DMut::from_raw_parts(
-                        self.get_array_mut().add(calc_2d_index(i, 0, self)),
+                        self.get_slice_mut().add(calc_2d_index(i, 0, self)),
                         self.get_array_col(),
                         self.get_row() - i,
                         self.get_col(),
@@ -110,13 +111,13 @@ where
                 Some([
                     [
                         Slice2DMut::from_raw_parts(
-                            self.get_array_mut(),
+                            self.get_slice_mut(),
                             self.get_array_col(),
                             i,
                             j,
                         ),
                         Slice2DMut::from_raw_parts(
-                            self.get_array_mut().add(calc_2d_index(i, 0, self)),
+                            self.get_slice_mut().add(calc_2d_index(i, 0, self)),
                             self.get_array_col(),
                             i,
                             self.get_col() - j,
@@ -124,13 +125,13 @@ where
                     ],
                     [
                         Slice2DMut::from_raw_parts(
-                            self.get_array_mut().add(calc_2d_index(0, j, self)),
+                            self.get_slice_mut().add(calc_2d_index(0, j, self)),
                             self.get_array_col(),
                             self.get_row() - i,
                             j,
                         ),
                         Slice2DMut::from_raw_parts(
-                            self.get_array_mut().add(calc_2d_index(i, j, self)),
+                            self.get_slice_mut().add(calc_2d_index(i, j, self)),
                             self.get_array_col(),
                             self.get_row() - i,
                             self.get_col() - j,

@@ -3,7 +3,8 @@ use crate::{
     utils::{calc_2d_index, calc_2d_range},
 };
 use core::ops::{
-    Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
+    Bound, Index, IndexMut, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+    RangeToInclusive,
 };
 
 pub unsafe trait Slice2DIndex<'a, T, S>
@@ -36,7 +37,7 @@ where
 
     #[inline(always)]
     unsafe fn get_unchecked(self, slice: &S) -> Self::Ref {
-        &*slice.get_array().add(calc_2d_index(self.0, self.1, slice))
+        &*slice.get_slice().add(calc_2d_index(self.0, self.1, slice))
     }
 
     #[inline(always)]
@@ -65,7 +66,7 @@ where
     #[inline(always)]
     unsafe fn get_unchecked_mut(self, slice: &mut S) -> Self::RefMut {
         &mut *slice
-            .get_array_mut()
+            .get_slice_mut()
             .add(calc_2d_index(self.0, self.1, slice))
     }
 
@@ -314,5 +315,87 @@ where
 
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
         self.get_mut(slice).expect("out of boundary")
+    }
+}
+
+// get reference of part of Slice2D
+pub trait GetElemRef<'a, T>: Shape2D + SlicePtr<T> {
+    fn get<I>(&'a self, index: I) -> Option<I::Ref>
+    where
+        I: Slice2DIndex<'a, T, Self>;
+    unsafe fn get_unchecked<I>(&'a self, index: I) -> I::Ref
+    where
+        I: Slice2DIndex<'a, T, Self>;
+}
+
+pub trait GetElemRefMut<'a, T>: Shape2D + SlicePtr<T> + SlicePtrMut<T> {
+    fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
+    where
+        I: Slice2DIndexMut<'a, T, Self>;
+    unsafe fn get_unchecked_mut<I>(&'a mut self, index: I) -> I::RefMut
+    where
+        I: Slice2DIndexMut<'a, T, Self>;
+}
+
+impl<'a, T, S> GetElemRef<'a, T> for S
+where
+    S: Shape2D + SlicePtr<T>,
+{
+    fn get<I>(&'a self, index: I) -> Option<I::Ref>
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get(self)
+    }
+    unsafe fn get_unchecked<I>(&'a self, index: I) -> I::Ref
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get_unchecked(self)
+    }
+}
+
+impl<'a, T, S> GetElemRefMut<'a, T> for S
+where
+    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+{
+    fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
+    where
+        I: Slice2DIndexMut<'a, T, Self>,
+    {
+        index.get_mut(self)
+    }
+    unsafe fn get_unchecked_mut<I>(&'a mut self, index: I) -> I::RefMut
+    where
+        I: Slice2DIndexMut<'a, T, Self>,
+    {
+        index.get_unchecked_mut(self)
+    }
+}
+
+// because `Index` trait in Rust can only return reference for now,
+// we can not index a Slice2D with ranges
+impl<'a, T: 'a> Index<(usize, usize)> for Slice2D<'a, T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: (usize, usize)) -> &T {
+        index.index(self)
+    }
+}
+
+impl<'a, T: 'a> Index<(usize, usize)> for Slice2DMut<'a, T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: (usize, usize)) -> &T {
+        index.index(self)
+    }
+}
+
+impl<'a, T: 'a> IndexMut<(usize, usize)> for Slice2DMut<'a, T> {
+    #[inline]
+    fn index_mut(&mut self, index: (usize, usize)) -> &mut T {
+        index.index_mut(self)
     }
 }

@@ -5,7 +5,8 @@ pub mod slice;
 pub mod split;
 pub mod utils;
 pub mod vec_2d;
-pub use slice::{GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut};
+pub use index::{GetElemRef, GetElemRefMut};
+pub use slice::{Shape2D, Shape2DExt, Slice2D, Slice2DMut};
 pub use split::{Split, SplitMut};
 
 #[cfg(test)]
