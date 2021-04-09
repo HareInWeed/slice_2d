@@ -1,13 +1,16 @@
+pub mod array_2d;
 pub mod index;
+pub mod iter;
 pub mod slice;
-pub use slice::{Slice2D, Slice2DMut};
+pub mod split;
+pub mod utils;
+pub mod vec_2d;
+pub use slice::{GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut};
+pub use split::{Split, SplitMut};
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        slice::{GetElemRef, GetElemRefMut, Shape2DExt, Split},
-        Slice2D, Slice2DMut,
-    };
+    use crate::{GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut, Split, SplitMut};
     #[test]
     fn slice_2d_index() {
         const ROW: usize = 3;
@@ -225,12 +228,12 @@ mod tests {
         assert_eq!(
             v,
             vec![
-                0, 1, 2, 3, 4, // row 1
-                5, 6, 10, 10, 9, // row 2
+                00, 01, 02, 03, 04, // row 1
+                05, 06, 10, 10, 09, // row 2
                 10, 11, 14, 14, 14, // row 3
-                15, 16, 17, 18, 19, // row 3
+                15, 16, 17, 18, 19, // row 4
             ]
-        )
+        );
     }
 
     #[test]
@@ -241,18 +244,74 @@ mod tests {
         const C: usize = 3;
         let v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
         let vs = Slice2D::from_slice(v.as_slice(), ROW, COL);
-        let [l, r] = vs.split_at_vertically(C);
-        assert_eq!(l.get_shape(), (ROW, C));
-        assert_eq!(r.get_shape(), (ROW, COL - C));
+        assert!(vs.split_at_horizontally(0).is_some());
+        assert!(vs.split_at_horizontally(ROW + 1).is_none());
+        assert!(vs.split_at_vertically(0).is_some());
+        assert!(vs.split_at_vertically(COL + 1).is_none());
+        assert!(vs.split_at((ROW + 1, COL)).is_none());
+        assert!(vs.split_at((ROW, COL + 1)).is_none());
+        assert!(vs.split_at((ROW + 1, COL + 1)).is_none());
 
-        let [t, b] = vs.split_at_horizontally(R);
+        let [t, b] = vs.split_at_horizontally(R).unwrap();
         assert_eq!(t.get_shape(), (R, COL));
         assert_eq!(b.get_shape(), (ROW - R, COL));
 
-        let [[tl, tr], [bl, br]] = vs.split_at((R, C));
+        let [l, r] = vs.split_at_vertically(C).unwrap();
+        assert_eq!(l.get_shape(), (ROW, C));
+        assert_eq!(r.get_shape(), (ROW, COL - C));
+
+        let [[tl, tr], [bl, br]] = vs.split_at((R, C)).unwrap();
         assert_eq!(tl.get_shape(), (R, C));
         assert_eq!(tr.get_shape(), (R, COL - C));
         assert_eq!(bl.get_shape(), (ROW - R, C));
         assert_eq!(br.get_shape(), (ROW - R, COL - C));
+    }
+
+    #[test]
+    fn slice_2d_split_mut() {
+        const ROW: usize = 4;
+        const COL: usize = 5;
+        const R: usize = 2;
+        const C: usize = 3;
+        let mut v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+        let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
+        assert!(vs.split_at_horizontally_mut(0).is_some());
+        assert!(vs.split_at_horizontally_mut(ROW + 1).is_none());
+        assert!(vs.split_at_vertically_mut(0).is_some());
+        assert!(vs.split_at_vertically_mut(COL + 1).is_none());
+        assert!(vs.split_at_mut((ROW + 1, COL)).is_none());
+        assert!(vs.split_at_mut((ROW, COL + 1)).is_none());
+        assert!(vs.split_at_mut((ROW + 1, COL + 1)).is_none());
+
+        let [mut t, mut b] = vs.split_at_horizontally_mut(R).unwrap();
+        assert_eq!(t.get_shape(), (R, COL));
+        assert_eq!(b.get_shape(), (ROW - R, COL));
+        t[(R - 1, COL - 1)] = 0;
+        b[(ROW - R - 1, COL - 1)] = 0;
+
+        let [mut l, mut r] = vs.split_at_vertically_mut(C).unwrap();
+        assert_eq!(l.get_shape(), (ROW, C));
+        assert_eq!(r.get_shape(), (ROW, COL - C));
+        l[(ROW - 1, C - 1)] = 0;
+        r[(ROW - 1, COL - C - 1)] = 0;
+
+        let [[mut tl, mut tr], [mut bl, mut br]] = vs.split_at_mut((R, C)).unwrap();
+        assert_eq!(tl.get_shape(), (R, C));
+        assert_eq!(tr.get_shape(), (R, COL - C));
+        assert_eq!(bl.get_shape(), (ROW - R, C));
+        assert_eq!(br.get_shape(), (ROW - R, COL - C));
+        tl[(0, 0)] = 0;
+        tr[(0, 0)] = 0;
+        bl[(0, 0)] = 0;
+        br[(0, 0)] = 0;
+        assert_eq!(
+            v,
+            vec![
+                00, 01, 02, 00, 04, // row 1
+                05, 06, 07, 08, 00, // row 2
+                00, 11, 12, 00, 14, // row 3
+                15, 16, 00, 18, 00, // row 4
+            ]
+        );
     }
 }

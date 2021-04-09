@@ -1,7 +1,9 @@
 use crate::index::{Slice2DIndex, Slice2DIndexMut};
-use core::marker::PhantomData;
-use core::ops::{Index, IndexMut};
-use core::ptr::null;
+use core::{
+    marker::PhantomData,
+    ops::{Index, IndexMut},
+    ptr::null,
+};
 
 pub trait Shape2D {
     fn get_array_col(&self) -> usize;
@@ -44,34 +46,6 @@ where
         I: Slice2DIndexMut<'a, T, Self>,
     {
         index.get_unchecked_mut(self)
-    }
-}
-
-pub trait Split<'a, T>: GetElemRef<'a, T> {
-    fn split_at_vertically(&'a self, j: usize) -> [Slice2D<'a, T>; 2] {
-        [
-            self.get((.., ..j)).expect("out of boundary"),
-            self.get((.., j..)).expect("out of boundary"),
-        ]
-    }
-    fn split_at_horizontally(&'a self, i: usize) -> [Slice2D<'a, T>; 2] {
-        [
-            self.get((..i, ..)).expect("out of boundary"),
-            self.get((..i, ..)).expect("out of boundary"),
-        ]
-    }
-    fn split_at(&'a self, idx: (usize, usize)) -> [[Slice2D<'a, T>; 2]; 2] {
-        let (i, j) = idx;
-        [
-            [
-                self.get((..i, ..j)).expect("out of boundary"),
-                self.get((..i, j..)).expect("out of boundary"),
-            ],
-            [
-                self.get((i.., ..j)).expect("out of boundary"),
-                self.get((i.., j..)).expect("out of boundary"),
-            ],
-        ]
     }
 }
 
@@ -179,7 +153,6 @@ impl<'a, T> SlicePtr<T> for Slice2D<'a, T> {
         self.raw.array
     }
 }
-impl<'a, T> Split<'a, T> for Slice2D<'a, T> {}
 
 #[derive(Hash, Default, Debug)]
 pub struct Slice2DMut<'a, T> {
@@ -225,10 +198,9 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
         &self.raw
     }
 }
-impl<'a, T> Split<'a, T> for Slice2DMut<'a, T> {}
 
-// get trait
-pub trait GetElemRef<'a, T>: Sized + Shape2D + SlicePtr<T> {
+// get reference of part of Slice2D
+pub trait GetElemRef<'a, T>: Shape2D + SlicePtr<T> {
     fn get<I>(&'a self, index: I) -> Option<I::Ref>
     where
         I: Slice2DIndex<'a, T, Self>;

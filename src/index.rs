@@ -1,27 +1,10 @@
-use crate::slice::{Shape2D, Slice2D, Slice2DMut, SlicePtr, SlicePtrMut};
+use crate::{
+    slice::{Shape2D, Slice2D, Slice2DMut, SlicePtr, SlicePtrMut},
+    utils::{calc_2d_index, calc_2d_range},
+};
 use core::ops::{
     Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
-
-#[inline(always)]
-fn calc_2d_index<S: Shape2D>(r: usize, c: usize, slice: &S) -> usize {
-    r * slice.get_array_col() + c
-}
-
-fn calc_2d_range<B: RangeBounds<usize>>(len: usize, bound: &B) -> (usize, usize) {
-    (
-        match bound.start_bound() {
-            Bound::Included(&i) => i,
-            Bound::Excluded(&i) => i + 1,
-            Bound::Unbounded => 0,
-        },
-        match bound.end_bound() {
-            Bound::Included(&i) => i + 1,
-            Bound::Excluded(&i) => i,
-            Bound::Unbounded => len,
-        },
-    )
-}
 
 pub unsafe trait Slice2DIndex<'a, T, S>
 where
