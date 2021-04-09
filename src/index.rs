@@ -5,22 +5,22 @@ use core::ops::{
 
 pub unsafe trait Slice2DIndex<'a, T, S>
 where
-    S: Slice2DShape + ArrayPtr<T>,
+    S: Slice2DShape + ArrayPtr<T> + ?Sized,
 {
     type Ref: 'a;
-    unsafe fn get_unchecked(self, slice: &S) -> Self::Ref;
-    fn get(self, slice: &S) -> Option<Self::Ref>;
-    fn index(self, slice: &S) -> Self::Ref;
+    unsafe fn get_unchecked(self, slice: &'a S) -> Self::Ref;
+    fn get(self, slice: &'a S) -> Option<Self::Ref>;
+    fn index(self, slice: &'a S) -> Self::Ref;
 }
 
 pub unsafe trait Slice2DIndexMut<'a, T, S>: Slice2DIndex<'a, T, S>
 where
-    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> + ?Sized,
 {
     type RefMut: 'a;
-    unsafe fn get_unchecked_mut(self, slice: &mut S) -> Self::RefMut;
-    fn get_mut(self, slice: &mut S) -> Option<Self::RefMut>;
-    fn index_mut(self, slice: &mut S) -> Self::RefMut;
+    unsafe fn get_unchecked_mut(self, slice: &'a mut S) -> Self::RefMut;
+    fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut>;
+    fn index_mut(self, slice: &'a mut S) -> Self::RefMut;
 }
 
 #[inline(always)]
@@ -42,7 +42,7 @@ where
     }
 
     #[inline(always)]
-    fn get(self, slice: &S) -> Option<Self::Ref> {
+    fn get(self, slice: &'a S) -> Option<Self::Ref> {
         unsafe {
             if self.0 < slice.get_row() && self.1 < slice.get_col() {
                 Some(self.get_unchecked(slice))
@@ -53,7 +53,7 @@ where
     }
 
     #[inline(always)]
-    fn index(self, slice: &S) -> Self::Ref {
+    fn index(self, slice: &'a S) -> Self::Ref {
         self.get(slice).expect("out of boundary")
     }
 }
@@ -72,7 +72,7 @@ where
     }
 
     #[inline(always)]
-    fn get_mut(self, slice: &mut S) -> Option<Self::RefMut> {
+    fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         unsafe {
             if self.0 < slice.get_row() && self.1 < slice.get_col() {
                 Some(self.get_unchecked_mut(slice))
@@ -83,7 +83,7 @@ where
     }
 
     #[inline(always)]
-    fn index_mut(self, slice: &mut S) -> Self::RefMut {
+    fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
         self.get_mut(slice).expect("out of boundary")
     }
 }
@@ -139,7 +139,7 @@ where
         )
     }
 
-    fn get(self, slice: &S) -> Option<Self::Ref> {
+    fn get(self, slice: &'a S) -> Option<Self::Ref> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
@@ -155,7 +155,7 @@ where
         }
     }
 
-    fn index(self, slice: &S) -> Self::Ref {
+    fn index(self, slice: &'a S) -> Self::Ref {
         self.get(slice).expect("out of boundary")
     }
 }
@@ -178,7 +178,7 @@ where
         )
     }
 
-    fn get_mut(self, slice: &mut S) -> Option<Self::RefMut> {
+    fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
@@ -194,7 +194,7 @@ where
         }
     }
 
-    fn index_mut(self, slice: &mut S) -> Self::RefMut {
+    fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
         self.get_mut(slice).expect("out of boundary")
     }
 }
@@ -217,7 +217,7 @@ where
         )
     }
 
-    fn get(self, slice: &S) -> Option<Self::Ref> {
+    fn get(self, slice: &'a S) -> Option<Self::Ref> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         unsafe {
             if rs < slice.get_row() && re <= slice.get_row() && self.1 < slice.get_col() {
@@ -228,7 +228,7 @@ where
         }
     }
 
-    fn index(self, slice: &S) -> Self::Ref {
+    fn index(self, slice: &'a S) -> Self::Ref {
         self.get(slice).expect("out of boundary")
     }
 }
@@ -250,7 +250,7 @@ where
         )
     }
 
-    fn get_mut(self, slice: &mut S) -> Option<Self::RefMut> {
+    fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         unsafe {
             if rs < slice.get_row() && re <= slice.get_row() && self.1 < slice.get_col() {
@@ -261,7 +261,7 @@ where
         }
     }
 
-    fn index_mut(self, slice: &mut S) -> Self::RefMut {
+    fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
         self.get_mut(slice).expect("out of boundary")
     }
 }
@@ -274,7 +274,7 @@ where
 {
     type Ref = Slice2D<'a, T>;
 
-    unsafe fn get_unchecked(self, slice: &S) -> Self::Ref {
+    unsafe fn get_unchecked(self, slice: &'a S) -> Self::Ref {
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         Slice2D::<T>::from_raw_parts(
             (self.0, cs).get_unchecked(slice),
@@ -284,7 +284,7 @@ where
         )
     }
 
-    fn get(self, slice: &S) -> Option<Self::Ref> {
+    fn get(self, slice: &'a S) -> Option<Self::Ref> {
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
             if self.0 < slice.get_row() && cs < slice.get_col() && ce <= slice.get_col() {
@@ -295,7 +295,7 @@ where
         }
     }
 
-    fn index(self, slice: &S) -> Self::Ref {
+    fn index(self, slice: &'a S) -> Self::Ref {
         self.get(slice).expect("out of boundary")
     }
 }
@@ -317,7 +317,7 @@ where
         )
     }
 
-    fn get_mut(self, slice: &mut S) -> Option<Self::RefMut> {
+    fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
             if self.0 < slice.get_row() && cs < slice.get_col() && ce <= slice.get_col() {
@@ -328,7 +328,7 @@ where
         }
     }
 
-    fn index_mut(self, slice: &mut S) -> Self::RefMut {
+    fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
         self.get_mut(slice).expect("out of boundary")
     }
 }

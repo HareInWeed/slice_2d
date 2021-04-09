@@ -17,29 +17,17 @@ pub trait ArrayPtrMut<T> {
     fn get_array_mut(&self) -> *mut T;
 }
 
-pub trait GetElemRef<'a, T>: Sized + Slice2DShape + ArrayPtr<T> {
-    fn get<I>(&self, index: I) -> Option<I::Ref>
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get(self)
-    }
-    unsafe fn get_unchecked<I>(&self, index: I) -> I::Ref
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get_unchecked(self)
-    }
-}
-
-pub trait GetElemRefMut<'a, T>: Sized + Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> {
-    fn get_mut<I>(&mut self, index: I) -> Option<I::RefMut>
+impl<'a, T, S> GetElemRefMut<'a, T> for S
+where
+    S: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T>,
+{
+    fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
     where
         I: Slice2DIndexMut<'a, T, Self>,
     {
         index.get_mut(self)
     }
-    unsafe fn get_unchecked_mut<I>(&mut self, index: I) -> I::RefMut
+    unsafe fn get_unchecked_mut<I>(&'a mut self, index: I) -> I::RefMut
     where
         I: Slice2DIndexMut<'a, T, Self>,
     {
@@ -47,10 +35,32 @@ pub trait GetElemRefMut<'a, T>: Sized + Slice2DShape + ArrayPtr<T> + ArrayPtrMut
     }
 }
 
-pub trait SplitSlice2D<'a, T: 'a>: GetElemRef<'a, T> {
-    fn split_at_vertically(&self, j: usize) -> [Self; 2];
-    fn split_at_horizontally(&self, i: usize) -> [Self; 2];
-    fn split_at(&self, idx: (usize, usize)) -> [[Self; 2]; 2];
+pub trait SplitSlice2D<'a, T>: GetElemRef<'a, T> {
+    fn split_at_vertically(&'a self, j: usize) -> [Slice2D<'a, T>; 2] {
+        [
+            self.get((.., ..j)).expect("out of boundary"),
+            self.get((.., j..)).expect("out of boundary"),
+        ]
+    }
+    fn split_at_horizontally(&'a self, i: usize) -> [Slice2D<'a, T>; 2] {
+        [
+            self.get((..i, ..)).expect("out of boundary"),
+            self.get((..i, ..)).expect("out of boundary"),
+        ]
+    }
+    fn split_at(&'a self, idx: (usize, usize)) -> [[Slice2D<'a, T>; 2]; 2] {
+        let (i, j) = idx;
+        [
+            [
+                self.get((..i, ..j)).expect("out of boundary"),
+                self.get((..i, j..)).expect("out of boundary"),
+            ],
+            [
+                self.get((i.., ..j)).expect("out of boundary"),
+                self.get((i.., j..)).expect("out of boundary"),
+            ],
+        ]
+    }
 }
 
 #[derive(Hash, Debug, Clone)]
@@ -144,8 +154,6 @@ impl<'a, T> Slice2D<'a, T> {
         }
     }
 }
-impl<'a, T> GetElemRef<'a, T> for Slice2D<'a, T> {}
-
 impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
     type DataT = T;
 
@@ -154,12 +162,12 @@ impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
         &self.raw
     }
 }
-
 impl<'a, T> ArrayPtr<T> for Slice2D<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
 }
+impl<'a, T> SplitSlice2D<'a, T> for Slice2D<'a, T> {}
 
 #[derive(Hash, Default, Debug)]
 pub struct Slice2DMut<'a, T> {
@@ -205,8 +213,44 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
         &self.raw
     }
 }
-impl<'a, T> GetElemRef<'a, T> for Slice2DMut<'a, T> {}
-impl<'a, T> GetElemRefMut<'a, T> for Slice2DMut<'a, T> {}
+impl<'a, T> SplitSlice2D<'a, T> for Slice2DMut<'a, T> {}
+
+// get trait
+pub trait GetElemRef<'a, T>: Sized + Slice2DShape + ArrayPtr<T> {
+    fn get<I>(&'a self, index: I) -> Option<I::Ref>
+    where
+        I: Slice2DIndex<'a, T, Self>;
+    unsafe fn get_unchecked<I>(&'a self, index: I) -> I::Ref
+    where
+        I: Slice2DIndex<'a, T, Self>;
+}
+
+pub trait GetElemRefMut<'a, T>: Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> {
+    fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
+    where
+        I: Slice2DIndexMut<'a, T, Self>;
+    unsafe fn get_unchecked_mut<I>(&'a mut self, index: I) -> I::RefMut
+    where
+        I: Slice2DIndexMut<'a, T, Self>;
+}
+
+impl<'a, T, S> GetElemRef<'a, T> for S
+where
+    S: Slice2DShape + ArrayPtr<T>,
+{
+    fn get<I>(&'a self, index: I) -> Option<I::Ref>
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get(self)
+    }
+    unsafe fn get_unchecked<I>(&'a self, index: I) -> I::Ref
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get_unchecked(self)
+    }
+}
 
 // because `Index` trait in Rust can only return reference for now,
 // we can not index a Slice2D with ranges
