@@ -4,7 +4,7 @@ pub use slice::{Slice2D, Slice2DMut};
 
 #[cfg(test)]
 mod tests {
-    use crate::{Slice2D, Slice2DMut};
+    use crate::{slice::GetElemRef, Slice2D, Slice2DMut};
     #[test]
     fn slice_2d_index() {
         const ROW: usize = 3;

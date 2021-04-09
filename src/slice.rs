@@ -17,6 +17,42 @@ pub trait ArrayPtrMut<T> {
     fn get_array_mut(&self) -> *mut T;
 }
 
+pub trait GetElemRef<'a, T>: Sized + Slice2DShape + ArrayPtr<T> {
+    fn get<I>(&self, index: I) -> Option<I::Ref>
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get(self)
+    }
+    unsafe fn get_unchecked<I>(&self, index: I) -> I::Ref
+    where
+        I: Slice2DIndex<'a, T, Self>,
+    {
+        index.get_unchecked(self)
+    }
+}
+
+pub trait GetElemRefMut<'a, T>: Sized + Slice2DShape + ArrayPtr<T> + ArrayPtrMut<T> {
+    fn get_mut<I>(&mut self, index: I) -> Option<I::RefMut>
+    where
+        I: Slice2DIndexMut<'a, T, Self>,
+    {
+        index.get_mut(self)
+    }
+    unsafe fn get_unchecked_mut<I>(&mut self, index: I) -> I::RefMut
+    where
+        I: Slice2DIndexMut<'a, T, Self>,
+    {
+        index.get_unchecked_mut(self)
+    }
+}
+
+pub trait SplitSlice2D<'a, T: 'a>: GetElemRef<'a, T> {
+    fn split_at_vertically(&self, j: usize) -> [Self; 2];
+    fn split_at_horizontally(&self, i: usize) -> [Self; 2];
+    fn split_at(&self, idx: (usize, usize)) -> [[Self; 2]; 2];
+}
+
 #[derive(Hash, Debug, Clone)]
 pub struct Slice2DRaw<T> {
     array: *const T,
@@ -107,19 +143,8 @@ impl<'a, T> Slice2D<'a, T> {
             phantom: PhantomData,
         }
     }
-    pub fn get<I>(&self, index: I) -> Option<I::Ref>
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get(self)
-    }
-    pub unsafe fn get_unchecked<I>(&self, index: I) -> I::Ref
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get_unchecked(self)
-    }
 }
+impl<'a, T> GetElemRef<'a, T> for Slice2D<'a, T> {}
 
 impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
     type DataT = T;
@@ -161,45 +186,17 @@ impl<'a, T> Slice2DMut<'a, T> {
             phantom: PhantomData,
         }
     }
-
-    pub fn get<I>(&self, index: I) -> Option<I::Ref>
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get(self)
-    }
-    pub unsafe fn get_unchecked<I>(&self, index: I) -> I::Ref
-    where
-        I: Slice2DIndex<'a, T, Self>,
-    {
-        index.get_unchecked(self)
-    }
-    pub fn get_mut<I>(&mut self, index: I) -> Option<I::RefMut>
-    where
-        I: Slice2DIndexMut<'a, T, Self>,
-    {
-        index.get_mut(self)
-    }
-    pub unsafe fn get_unchecked_mut<I>(&mut self, index: I) -> I::RefMut
-    where
-        I: Slice2DIndexMut<'a, T, Self>,
-    {
-        index.get_unchecked_mut(self)
-    }
 }
-
 impl<'a, T> ArrayPtr<T> for Slice2DMut<'a, T> {
     fn get_array(&self) -> *const T {
         self.raw.array
     }
 }
-
 impl<'a, T> ArrayPtrMut<T> for Slice2DMut<'a, T> {
     fn get_array_mut(&self) -> *mut T {
         self.raw.array as *mut T
     }
 }
-
 impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
     type DataT = T;
 
@@ -208,6 +205,8 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
         &self.raw
     }
 }
+impl<'a, T> GetElemRef<'a, T> for Slice2DMut<'a, T> {}
+impl<'a, T> GetElemRefMut<'a, T> for Slice2DMut<'a, T> {}
 
 // because `Index` trait in Rust can only return reference for now,
 // we can not index a Slice2D with ranges

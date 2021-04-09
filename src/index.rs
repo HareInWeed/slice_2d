@@ -120,10 +120,11 @@ impl IRange for RangeToInclusive<usize> {}
 impl IRange for RangeFull {}
 
 // (RangeBounds, RangeBounds)
-unsafe impl<'a, T: 'a, S, B> Slice2DIndex<'a, T, S> for (B, B)
+unsafe impl<'a, T: 'a, S, B1, B2> Slice2DIndex<'a, T, S> for (B1, B2)
 where
     S: Slice2DShape + ArrayPtr<T>,
-    B: IRange,
+    B1: IRange,
+    B2: IRange,
 {
     type Ref = Slice2D<'a, T>;
 
