@@ -3,6 +3,26 @@ use core::ops::{
     Bound, Range, RangeBounds, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
 
+#[inline(always)]
+fn calc_2d_index<S: Shape2D>(r: usize, c: usize, slice: &S) -> usize {
+    r * slice.get_array_col() + c
+}
+
+fn calc_2d_range<B: RangeBounds<usize>>(len: usize, bound: &B) -> (usize, usize) {
+    (
+        match bound.start_bound() {
+            Bound::Included(&i) => i,
+            Bound::Excluded(&i) => i + 1,
+            Bound::Unbounded => 0,
+        },
+        match bound.end_bound() {
+            Bound::Included(&i) => i + 1,
+            Bound::Excluded(&i) => i,
+            Bound::Unbounded => len,
+        },
+    )
+}
+
 pub unsafe trait Slice2DIndex<'a, T, S>
 where
     S: Shape2D + SlicePtr<T> + ?Sized,
@@ -21,11 +41,6 @@ where
     unsafe fn get_unchecked_mut(self, slice: &'a mut S) -> Self::RefMut;
     fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut>;
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut;
-}
-
-#[inline(always)]
-fn calc_2d_index<S: Shape2D>(r: usize, c: usize, slice: &S) -> usize {
-    r * slice.get_array_col() + c
 }
 
 // index (usize, usize)
@@ -89,21 +104,6 @@ where
 }
 
 // index Range
-fn calc_2d_range<B: RangeBounds<usize>>(len: usize, bound: &B) -> (usize, usize) {
-    (
-        match bound.start_bound() {
-            Bound::Included(&i) => i,
-            Bound::Excluded(&i) => i + 1,
-            Bound::Unbounded => 0,
-        },
-        match bound.end_bound() {
-            Bound::Included(&i) => i + 1,
-            Bound::Excluded(&i) => i,
-            Bound::Unbounded => len,
-        },
-    )
-}
-
 pub trait IRange: RangeBounds<usize> {}
 impl<'a> IRange for (Bound<&'a usize>, Bound<&'a usize>) {}
 impl IRange for (Bound<usize>, Bound<usize>) {}
@@ -160,10 +160,11 @@ where
     }
 }
 
-unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (B, B)
+unsafe impl<'a, T: 'a, S, B1, B2> Slice2DIndexMut<'a, T, S> for (B1, B2)
 where
     S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
-    B: IRange,
+    B1: IRange,
+    B2: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;
 
