@@ -127,7 +127,7 @@ impl<'a, T> Slice2D<'a, T> {
             row * col <= slice.len(),
             "slice does not contain enough space."
         );
-        unsafe { Slice2D::<'b, T>::from_raw_parts(slice.as_ptr(), col, row, col) }
+        unsafe { Slice2D::from_raw_parts(slice.as_ptr(), col, row, col) }
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *const T,
@@ -135,8 +135,11 @@ impl<'a, T> Slice2D<'a, T> {
         row: usize,
         col: usize,
     ) -> Slice2D<'b, T> {
+        Slice2D::from_slice_2d_raw(Slice2DRaw::from_raw_parts(slice, base_col, row, col))
+    }
+    pub unsafe fn from_slice_2d_raw<'b>(raw: Slice2DRaw<T>) -> Slice2D<'b, T> {
         Slice2D {
-            raw: Slice2DRaw::from_raw_parts(slice, base_col, row, col),
+            raw,
             _marker: PhantomData,
         }
     }
@@ -175,7 +178,7 @@ impl<'a, T> Slice2DMut<'a, T> {
             row * col <= slice.len(),
             "slice does not contain enough space."
         );
-        unsafe { Slice2DMut::<'b, T>::from_raw_parts(slice.as_mut_ptr(), col, row, col) }
+        unsafe { Slice2DMut::from_raw_parts(slice.as_mut_ptr(), col, row, col) }
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *mut T,
@@ -183,8 +186,11 @@ impl<'a, T> Slice2DMut<'a, T> {
         row: usize,
         col: usize,
     ) -> Slice2DMut<'b, T> {
+        Slice2DMut::from_slice_2d_raw(Slice2DRaw::from_raw_parts(slice, base_col, row, col))
+    }
+    pub unsafe fn from_slice_2d_raw<'b>(raw: Slice2DRaw<T>) -> Slice2DMut<'b, T> {
         Slice2DMut {
-            raw: Slice2DRaw::from_raw_parts(slice, base_col, row, col),
+            raw,
             _marker: PhantomData,
         }
     }
