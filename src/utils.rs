@@ -3,7 +3,7 @@ use core::ops::{Bound, RangeBounds};
 
 #[inline(always)]
 pub fn calc_2d_index<S: Shape2D>(r: usize, c: usize, slice: &S) -> usize {
-    r * slice.get_array_col() + c
+    r * slice.get_base_col() + c
 }
 
 pub fn calc_2d_range<B: RangeBounds<usize>>(len: usize, bound: &B) -> (usize, usize) {

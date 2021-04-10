@@ -1,7 +1,7 @@
-use core::{marker::PhantomData, ptr::null};
+use core::{convert::From, marker::PhantomData, ptr::null};
 
 pub trait Shape2D {
-    fn get_array_col(&self) -> usize;
+    fn get_base_col(&self) -> usize;
     fn get_row(&self) -> usize;
     fn get_col(&self) -> usize;
 }
@@ -28,23 +28,23 @@ pub trait SlicePtrMut<T> {
 
 #[derive(Hash, Debug, Clone)]
 pub struct Slice2DRaw<T> {
-    array: *const T,
+    slice: *const T,
 
-    array_col: usize,
+    base_col: usize,
     row: usize,
     col: usize,
 }
 
 impl<T> Slice2DRaw<T> {
     unsafe fn from_raw_parts(
-        array: *const T,
-        array_col: usize,
+        slice: *const T,
+        base_col: usize,
         row: usize,
         col: usize,
     ) -> Slice2DRaw<T> {
         Slice2DRaw {
-            array,
-            array_col,
+            slice,
+            base_col,
             row,
             col,
         }
@@ -57,9 +57,25 @@ impl<T> Default for Slice2DRaw<T> {
     }
 }
 
+impl<T> SlicePtr<T> for Slice2DRaw<T> {
+    fn get_slice(&self) -> *const T {
+        self.slice
+    }
+}
+impl<T> SlicePtrMut<T> for Slice2DRaw<T> {
+    fn get_slice_mut(&self) -> *mut T {
+        self.slice as *mut T
+    }
+}
+
 pub trait Slice2DRawRef {
     type DataT;
     fn get_slice_2d_raw(&self) -> &Slice2DRaw<Self::DataT>;
+}
+
+pub trait Slice2DRawRefMut {
+    type DataT;
+    fn get_slice_2d_raw_mut(&mut self) -> &mut Slice2DRaw<Self::DataT>;
 }
 
 impl<T, S> Shape2D for S
@@ -67,8 +83,8 @@ where
     S: Slice2DRawRef<DataT = T>,
 {
     #[inline(always)]
-    fn get_array_col(&self) -> usize {
-        self.get_slice_2d_raw().array_col
+    fn get_base_col(&self) -> usize {
+        self.get_slice_2d_raw().base_col
     }
 
     #[inline(always)]
@@ -90,11 +106,19 @@ impl<T> Slice2DRawRef for Slice2DRaw<T> {
         &self
     }
 }
+impl<T> Slice2DRawRefMut for Slice2DRaw<T> {
+    type DataT = T;
+
+    #[inline(always)]
+    fn get_slice_2d_raw_mut(&mut self) -> &mut Slice2DRaw<Self::DataT> {
+        self
+    }
+}
 
 #[derive(Hash, Clone, Default, Debug)]
 pub struct Slice2D<'a, T> {
     raw: Slice2DRaw<T>,
-    phantom: PhantomData<&'a T>,
+    _marker: PhantomData<&'a T>,
 }
 
 impl<'a, T> Slice2D<'a, T> {
@@ -107,13 +131,13 @@ impl<'a, T> Slice2D<'a, T> {
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *const T,
-        array_col: usize,
+        base_col: usize,
         row: usize,
         col: usize,
     ) -> Slice2D<'b, T> {
         Slice2D {
-            raw: Slice2DRaw::from_raw_parts(slice, array_col, row, col),
-            phantom: PhantomData,
+            raw: Slice2DRaw::from_raw_parts(slice, base_col, row, col),
+            _marker: PhantomData,
         }
     }
 }
@@ -127,14 +151,22 @@ impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
 }
 impl<'a, T> SlicePtr<T> for Slice2D<'a, T> {
     fn get_slice(&self) -> *const T {
-        self.raw.array
+        self.raw.slice
+    }
+}
+impl<'a, T> From<Slice2DMut<'a, T>> for Slice2D<'a, T> {
+    fn from(s: Slice2DMut<'a, T>) -> Self {
+        Slice2D {
+            raw: s.raw,
+            _marker: PhantomData,
+        }
     }
 }
 
 #[derive(Hash, Default, Debug)]
 pub struct Slice2DMut<'a, T> {
     raw: Slice2DRaw<T>,
-    phantom: PhantomData<&'a mut T>,
+    _marker: PhantomData<&'a mut T>,
 }
 
 impl<'a, T> Slice2DMut<'a, T> {
@@ -147,24 +179,24 @@ impl<'a, T> Slice2DMut<'a, T> {
     }
     pub unsafe fn from_raw_parts<'b>(
         slice: *mut T,
-        array_col: usize,
+        base_col: usize,
         row: usize,
         col: usize,
     ) -> Slice2DMut<'b, T> {
         Slice2DMut {
-            raw: Slice2DRaw::from_raw_parts(slice, array_col, row, col),
-            phantom: PhantomData,
+            raw: Slice2DRaw::from_raw_parts(slice, base_col, row, col),
+            _marker: PhantomData,
         }
     }
 }
 impl<'a, T> SlicePtr<T> for Slice2DMut<'a, T> {
     fn get_slice(&self) -> *const T {
-        self.raw.array
+        self.raw.slice
     }
 }
 impl<'a, T> SlicePtrMut<T> for Slice2DMut<'a, T> {
     fn get_slice_mut(&self) -> *mut T {
-        self.raw.array as *mut T
+        self.raw.slice as *mut T
     }
 }
 impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
@@ -173,5 +205,13 @@ impl<'a, T> Slice2DRawRef for Slice2DMut<'a, T> {
     #[inline(always)]
     fn get_slice_2d_raw(&self) -> &Slice2DRaw<Self::DataT> {
         &self.raw
+    }
+}
+impl<'a, T> Slice2DRawRefMut for Slice2DMut<'a, T> {
+    type DataT = T;
+
+    #[inline(always)]
+    fn get_slice_2d_raw_mut(&mut self) -> &mut Slice2DRaw<Self::DataT> {
+        &mut self.raw
     }
 }

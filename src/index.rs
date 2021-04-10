@@ -17,9 +17,9 @@ where
     fn index(self, slice: &'a S) -> Self::Ref;
 }
 
-pub unsafe trait Slice2DIndexMut<'a, T, S>: Slice2DIndex<'a, T, S>
+pub unsafe trait Slice2DIndexMut<'a, T, S>
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T> + ?Sized,
+    S: Shape2D + SlicePtrMut<T> + ?Sized,
 {
     type RefMut: 'a;
     unsafe fn get_unchecked_mut(self, slice: &'a mut S) -> Self::RefMut;
@@ -59,7 +59,7 @@ where
 
 unsafe impl<'a, T: 'a, S> Slice2DIndexMut<'a, T, S> for (usize, usize)
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+    S: Shape2D + SlicePtrMut<T>,
 {
     type RefMut = &'a mut T;
 
@@ -117,7 +117,7 @@ where
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         Slice2D::<T>::from_raw_parts(
             (rs, cs).get_unchecked(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             re - rs,
             ce - cs,
         )
@@ -146,7 +146,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B1, B2> Slice2DIndexMut<'a, T, S> for (B1, B2)
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+    S: Shape2D + SlicePtrMut<T>,
     B1: IRange,
     B2: IRange,
 {
@@ -157,7 +157,7 @@ where
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         Slice2DMut::<T>::from_raw_parts(
             (rs, cs).get_unchecked_mut(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             re - rs,
             ce - cs,
         )
@@ -196,7 +196,7 @@ where
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         Slice2D::<T>::from_raw_parts(
             (rs, self.1).get_unchecked(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             re - rs,
             1,
         )
@@ -220,7 +220,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (B, usize)
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+    S: Shape2D + SlicePtrMut<T>,
     B: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;
@@ -229,7 +229,7 @@ where
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         Slice2DMut::<T>::from_raw_parts(
             (rs, self.1).get_unchecked_mut(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             re - rs,
             1,
         )
@@ -263,7 +263,7 @@ where
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         Slice2D::<T>::from_raw_parts(
             (self.0, cs).get_unchecked(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             1,
             ce - cs,
         )
@@ -287,7 +287,7 @@ where
 
 unsafe impl<'a, T: 'a, S, B> Slice2DIndexMut<'a, T, S> for (usize, B)
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+    S: Shape2D + SlicePtrMut<T>,
     B: IRange,
 {
     type RefMut = Slice2DMut<'a, T>;
@@ -296,7 +296,7 @@ where
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         Slice2DMut::<T>::from_raw_parts(
             (self.0, cs).get_unchecked_mut(slice),
-            slice.get_array_col(),
+            slice.get_base_col(),
             1,
             ce - cs,
         )
@@ -328,7 +328,7 @@ pub trait GetElemRef<'a, T>: Shape2D + SlicePtr<T> {
         I: Slice2DIndex<'a, T, Self>;
 }
 
-pub trait GetElemRefMut<'a, T>: Shape2D + SlicePtr<T> + SlicePtrMut<T> {
+pub trait GetElemRefMut<'a, T>: Shape2D + SlicePtrMut<T> {
     fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
     where
         I: Slice2DIndexMut<'a, T, Self>;
@@ -357,7 +357,7 @@ where
 
 impl<'a, T, S> GetElemRefMut<'a, T> for S
 where
-    S: Shape2D + SlicePtr<T> + SlicePtrMut<T>,
+    S: Shape2D + SlicePtrMut<T>,
 {
     fn get_mut<I>(&'a mut self, index: I) -> Option<I::RefMut>
     where
