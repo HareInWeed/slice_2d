@@ -1,4 +1,7 @@
-use slice_2d::{GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut, Split, SplitMut};
+use slice_2d::{
+    iter::{Slice2DIter, Slice2DIterMut},
+    GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut, Split, SplitMut,
+};
 
 #[test]
 fn slice_2d_index() {
@@ -311,8 +314,6 @@ fn slice_2d_iter() {
     let v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
     let vs = Slice2D::from_slice(v.as_slice(), ROW, COL);
 
-    use slice_2d::iter::Slice2DIter;
-
     assert_eq!(
         vs.row_iter()
             .map(|r| r.map(|e| *e).collect())
@@ -345,8 +346,6 @@ fn slice_2d_iter_mut() {
     const COL: usize = 5;
     let mut v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
     let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
-
-    use slice_2d::iter::{Slice2DIter, Slice2DIterMut};
 
     assert_eq!(
         vs.row_iter()
