@@ -1,7 +1,4 @@
-use slice_2d::{
-    iter::{Slice2DIter, Slice2DIterMut},
-    GetElemRef, GetElemRefMut, Shape2DExt, Slice2D, Slice2DMut, Split, SplitMut,
-};
+use slice_2d::prelude::*;
 
 #[test]
 fn slice_2d_index() {
@@ -408,4 +405,67 @@ fn slice_2d_iter_mut() {
             vec![04, 09, 14, 19],
         ]
     );
+}
+
+#[test]
+fn slice_2d_fill() {
+    const ROW: usize = 4;
+    const COL: usize = 5;
+    let mut v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+    let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
+
+    vs.fill(0);
+    vs.row_iter().flatten().for_each(|e| assert_eq!(e, &0));
+
+    vs.fill_with({
+        let mut counter = 0;
+        move || {
+            counter += 1;
+            counter
+        }
+    });
+
+    assert_eq!(
+        v,
+        vec![
+            01, 02, 03, 04, 05, // row 1
+            06, 07, 08, 09, 10, // row 2
+            11, 12, 13, 14, 15, // row 3
+            16, 17, 18, 19, 20, // row 4
+        ]
+    );
+}
+
+#[test]
+fn slice_2d_swap() {
+    const ROW: usize = 4;
+    const COL: usize = 5;
+    let mut v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+    let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
+
+    for j in 0..COL {
+        vs.swap((0, j), (ROW - 1, COL - 1 - j));
+    }
+
+    assert_eq!(
+        v,
+        vec![
+            19, 18, 17, 16, 15, // row 1
+            05, 06, 07, 08, 09, // row 2
+            10, 11, 12, 13, 14, // row 3
+            04, 03, 02, 01, 00, // row 4
+        ]
+    );
+}
+
+#[test]
+#[should_panic(expected = "out of boundary")]
+fn slice_2d_swap_out_of_range() {
+    const ROW: usize = 4;
+    const COL: usize = 5;
+    let mut v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+    let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
+    let mut sub_slice = vs.get_mut((..ROW - 1, ..COL - 1)).unwrap();
+
+    sub_slice.swap((0, 0), (ROW - 1, COL - 1));
 }

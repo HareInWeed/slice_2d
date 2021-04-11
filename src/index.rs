@@ -37,7 +37,9 @@ where
 
     #[inline(always)]
     unsafe fn get_unchecked(self, slice: &S) -> Self::Ref {
-        &*slice.get_slice().add(calc_2d_index(self.0, self.1, slice))
+        &*slice
+            .get_slice_ptr()
+            .add(calc_2d_index(self.0, self.1, slice))
     }
 
     #[inline(always)]
@@ -66,7 +68,7 @@ where
     #[inline(always)]
     unsafe fn get_unchecked_mut(self, slice: &mut S) -> Self::RefMut {
         &mut *slice
-            .get_slice_mut()
+            .get_slice_ptr_mut()
             .add(calc_2d_index(self.0, self.1, slice))
     }
 

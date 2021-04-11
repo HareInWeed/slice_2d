@@ -19,11 +19,11 @@ where
 }
 
 pub trait SlicePtr<T> {
-    fn get_slice(&self) -> *const T;
+    fn get_slice_ptr(&self) -> *const T;
 }
 
 pub trait SlicePtrMut<T> {
-    fn get_slice_mut(&self) -> *mut T;
+    fn get_slice_ptr_mut(&self) -> *mut T;
 }
 
 #[derive(Hash, Debug, Clone)]
@@ -58,12 +58,12 @@ impl<T> Default for Slice2DRaw<T> {
 }
 
 impl<T> SlicePtr<T> for Slice2DRaw<T> {
-    fn get_slice(&self) -> *const T {
+    fn get_slice_ptr(&self) -> *const T {
         self.slice
     }
 }
 impl<T> SlicePtrMut<T> for Slice2DRaw<T> {
-    fn get_slice_mut(&self) -> *mut T {
+    fn get_slice_ptr_mut(&self) -> *mut T {
         self.slice as *mut T
     }
 }
@@ -153,7 +153,7 @@ impl<'a, T> Slice2DRawRef for Slice2D<'a, T> {
     }
 }
 impl<'a, T> SlicePtr<T> for Slice2D<'a, T> {
-    fn get_slice(&self) -> *const T {
+    fn get_slice_ptr(&self) -> *const T {
         self.raw.slice
     }
 }
@@ -196,12 +196,12 @@ impl<'a, T> Slice2DMut<'a, T> {
     }
 }
 impl<'a, T> SlicePtr<T> for Slice2DMut<'a, T> {
-    fn get_slice(&self) -> *const T {
+    fn get_slice_ptr(&self) -> *const T {
         self.raw.slice
     }
 }
 impl<'a, T> SlicePtrMut<T> for Slice2DMut<'a, T> {
-    fn get_slice_mut(&self) -> *mut T {
+    fn get_slice_ptr_mut(&self) -> *mut T {
         self.raw.slice as *mut T
     }
 }

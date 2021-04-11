@@ -17,7 +17,7 @@ pub struct Rows<'a, T> {
 
 impl<'a, T> Rows<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b Slice2DRaw<T>) -> Rows<'b, T> {
+    pub fn new(slice_2d: &Slice2DRaw<T>) -> Rows<'_, T> {
         Rows {
             slice_2d,
             row: 0,
@@ -34,7 +34,7 @@ impl<'a, T> Iterator for Rows<'a, T> {
         if self.row < slice_2d.get_row() {
             unsafe {
                 let row_ptr = slice_2d
-                    .get_slice()
+                    .get_slice_ptr()
                     .add(calc_2d_index(self.row, 0, slice_2d));
                 let row_slice = slice::from_raw_parts(row_ptr, slice_2d.get_col());
                 self.row += 1;
@@ -55,15 +55,15 @@ pub struct Col<'a, T> {
 
 impl<'a, T> Col<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b Slice2DRaw<T>, col: usize) -> Option<Col<'b, T>> {
+    pub fn new(slice_2d: &Slice2DRaw<T>, col: usize) -> Option<Col<'_, T>> {
         if col < slice_2d.get_col() {
-            unsafe { Some(Col::<'b, T>::new_unchecked(slice_2d, col)) }
+            unsafe { Some(Col::new_unchecked(slice_2d, col)) }
         } else {
             None
         }
     }
     #[inline]
-    pub unsafe fn new_unchecked<'b>(slice_2d: &'b Slice2DRaw<T>, col: usize) -> Col<'b, T> {
+    pub unsafe fn new_unchecked(slice_2d: &Slice2DRaw<T>, col: usize) -> Col<'_, T> {
         let ptr = slice_2d.get_unchecked((0, col)) as *const T;
         Col {
             ptr,
@@ -98,7 +98,7 @@ pub struct Cols<'a, T> {
 
 impl<'a, T> Cols<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b Slice2DRaw<T>) -> Cols<'b, T> {
+    pub fn new(slice_2d: &Slice2DRaw<T>) -> Cols<'_, T> {
         Cols {
             slice_2d,
             col: 0,
@@ -133,7 +133,7 @@ pub struct RowsMut<'a, T> {
 
 impl<'a, T> RowsMut<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b mut Slice2DRaw<T>) -> RowsMut<'b, T> {
+    pub fn new(slice_2d: &mut Slice2DRaw<T>) -> RowsMut<'_, T> {
         RowsMut {
             slice_2d,
             row: 0,
@@ -167,15 +167,15 @@ pub struct ColMut<'a, T> {
 
 impl<'a, T> ColMut<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b mut Slice2DRaw<T>, col: usize) -> Option<ColMut<'b, T>> {
+    pub fn new(slice_2d: &mut Slice2DRaw<T>, col: usize) -> Option<ColMut<'_, T>> {
         if col < slice_2d.get_col() {
-            unsafe { Some(ColMut::<'b, T>::new_unchecked(slice_2d, col)) }
+            unsafe { Some(ColMut::new_unchecked(slice_2d, col)) }
         } else {
             None
         }
     }
     #[inline]
-    pub unsafe fn new_unchecked<'b>(slice_2d: &'b mut Slice2DRaw<T>, col: usize) -> ColMut<'b, T> {
+    pub unsafe fn new_unchecked(slice_2d: &mut Slice2DRaw<T>, col: usize) -> ColMut<'_, T> {
         let ptr = slice_2d.get_unchecked_mut((0, col)) as *mut T;
         ColMut {
             ptr,
@@ -210,7 +210,7 @@ pub struct ColsMut<'a, T> {
 
 impl<'a, T> ColsMut<'a, T> {
     #[inline]
-    pub fn new<'b>(slice_2d: &'b mut Slice2DRaw<T>) -> ColsMut<'b, T> {
+    pub fn new(slice_2d: &mut Slice2DRaw<T>) -> ColsMut<'_, T> {
         ColsMut {
             slice_2d,
             col: 0,
