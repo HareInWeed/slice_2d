@@ -1,11 +1,16 @@
-pub mod array_2d;
+#![no_std]
+
+pub mod slice;
+
+pub mod cmp;
 pub mod fill;
 pub mod index;
 pub mod iter;
-pub mod slice;
 pub mod split;
 pub mod swap;
 pub mod utils;
+
+pub mod array_2d;
 pub mod vec_2d;
 
 pub mod prelude {

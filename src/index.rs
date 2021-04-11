@@ -55,7 +55,7 @@ where
 
     #[inline(always)]
     fn index(self, slice: &'a S) -> Self::Ref {
-        self.get(slice).expect("out of boundary")
+        self.get(slice).expect("out of range")
     }
 }
 
@@ -85,7 +85,7 @@ where
 
     #[inline(always)]
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
-        self.get_mut(slice).expect("out of boundary")
+        self.get_mut(slice).expect("out of range")
     }
 }
 
@@ -142,7 +142,7 @@ where
     }
 
     fn index(self, slice: &'a S) -> Self::Ref {
-        self.get(slice).expect("out of boundary")
+        self.get(slice).expect("out of range")
     }
 }
 
@@ -182,7 +182,7 @@ where
     }
 
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
-        self.get_mut(slice).expect("out of boundary")
+        self.get_mut(slice).expect("out of range")
     }
 }
 
@@ -216,7 +216,7 @@ where
     }
 
     fn index(self, slice: &'a S) -> Self::Ref {
-        self.get(slice).expect("out of boundary")
+        self.get(slice).expect("out of range")
     }
 }
 
@@ -249,7 +249,7 @@ where
     }
 
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
-        self.get_mut(slice).expect("out of boundary")
+        self.get_mut(slice).expect("out of range")
     }
 }
 
@@ -283,7 +283,7 @@ where
     }
 
     fn index(self, slice: &'a S) -> Self::Ref {
-        self.get(slice).expect("out of boundary")
+        self.get(slice).expect("out of range")
     }
 }
 
@@ -316,7 +316,7 @@ where
     }
 
     fn index_mut(self, slice: &'a mut S) -> Self::RefMut {
-        self.get_mut(slice).expect("out of boundary")
+        self.get_mut(slice).expect("out of range")
     }
 }
 

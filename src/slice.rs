@@ -103,7 +103,7 @@ impl<T> Slice2DRawRef for Slice2DRaw<T> {
 
     #[inline(always)]
     fn get_slice_2d_raw(&self) -> &Slice2DRaw<Self::DataT> {
-        &self
+        self
     }
 }
 impl<T> Slice2DRawRefMut for Slice2DRaw<T> {

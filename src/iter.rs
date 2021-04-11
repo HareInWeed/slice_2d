@@ -46,6 +46,43 @@ impl<'a, T> Iterator for Rows<'a, T> {
     }
 }
 
+pub struct RowSlices<'a, T> {
+    slice_2d: *const Slice2DRaw<T>,
+    row: usize,
+    _marker: PhantomData<&'a T>,
+}
+
+impl<'a, T> RowSlices<'a, T> {
+    #[inline]
+    pub fn new(slice_2d: &Slice2DRaw<T>) -> RowSlices<'_, T> {
+        RowSlices {
+            slice_2d,
+            row: 0,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, T> Iterator for RowSlices<'a, T> {
+    type Item = &'a [T];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let slice_2d = unsafe { &*self.slice_2d };
+        if self.row < slice_2d.get_row() {
+            unsafe {
+                let row_ptr = slice_2d
+                    .get_slice_ptr()
+                    .add(calc_2d_index(self.row, 0, slice_2d));
+                let row_slice = slice::from_raw_parts(row_ptr, slice_2d.get_col());
+                self.row += 1;
+                Some(row_slice)
+            }
+        } else {
+            None
+        }
+    }
+}
+
 pub struct Col<'a, T> {
     ptr: *const T,
     end: *const T,
@@ -158,6 +195,39 @@ impl<'a, T> Iterator for RowsMut<'a, T> {
     }
 }
 
+pub struct RowSlicesMut<'a, T> {
+    slice_2d: *mut Slice2DRaw<T>,
+    row: usize,
+    _marker: PhantomData<&'a mut T>,
+}
+
+impl<'a, T> RowSlicesMut<'a, T> {
+    #[inline]
+    pub fn new(slice_2d: &mut Slice2DRaw<T>) -> RowSlicesMut<'_, T> {
+        RowSlicesMut {
+            slice_2d,
+            row: 0,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'a, T> Iterator for RowSlicesMut<'a, T> {
+    type Item = &'a mut [T];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let slice_2d = unsafe { &mut *self.slice_2d };
+        if self.row < slice_2d.get_row() {
+            let row_ptr = unsafe { slice_2d.get_unchecked_mut((self.row, 0)) } as *mut T;
+            let row_slice = unsafe { slice::from_raw_parts_mut(row_ptr, slice_2d.get_col()) };
+            self.row += 1;
+            Some(row_slice)
+        } else {
+            None
+        }
+    }
+}
+
 pub struct ColMut<'a, T> {
     ptr: *mut T,
     end: *mut T,
@@ -238,11 +308,13 @@ impl<'a, T> Iterator for ColsMut<'a, T> {
 
 pub trait Slice2DIter<T> {
     fn row_iter(&self) -> Rows<'_, T>;
+    fn row_slice_iter(&self) -> RowSlices<'_, T>;
     fn col_iter(&self) -> Cols<'_, T>;
 }
 
 pub trait Slice2DIterMut<T> {
     fn row_iter_mut(&mut self) -> RowsMut<'_, T>;
+    fn row_slice_iter_mut(&mut self) -> RowSlicesMut<'_, T>;
     fn col_iter_mut(&mut self) -> ColsMut<'_, T>;
 }
 
@@ -252,6 +324,10 @@ where
 {
     fn row_iter(&self) -> Rows<'_, T> {
         Rows::new(self.get_slice_2d_raw())
+    }
+
+    fn row_slice_iter(&self) -> RowSlices<'_, T> {
+        RowSlices::new(self.get_slice_2d_raw())
     }
 
     fn col_iter(&self) -> Cols<'_, T> {
@@ -265,6 +341,10 @@ where
 {
     fn row_iter_mut(&mut self) -> RowsMut<'_, T> {
         RowsMut::new(self.get_slice_2d_raw_mut())
+    }
+
+    fn row_slice_iter_mut(&mut self) -> RowSlicesMut<'_, T> {
+        RowSlicesMut::new(self.get_slice_2d_raw_mut())
     }
 
     fn col_iter_mut(&mut self) -> ColsMut<'_, T> {

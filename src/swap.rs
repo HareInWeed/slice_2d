@@ -1,19 +1,24 @@
 use core::panic;
 
 use crate::{
-    slice::{Shape2D, Slice2DMut, SlicePtrMut},
+    slice::{Shape2D, SlicePtrMut},
     utils::calc_2d_index,
 };
 
-pub trait Slice2DSwap {
+// the type parameter `T` here is redundant
+// it is added just for blanket implementation
+pub trait Slice2DSwap<T> {
     fn swap(&mut self, idx1: (usize, usize), idx2: (usize, usize));
 }
 
-impl<'a, T> Slice2DSwap for Slice2DMut<'a, T> {
+impl<'a, T, S> Slice2DSwap<T> for S
+where
+    S: Shape2D + SlicePtrMut<T>,
+{
     fn swap(&mut self, idx1: (usize, usize), idx2: (usize, usize)) {
         unsafe {
             // we must check the boundary here, because some indices out
-            // of boundary still refer to valid address, just not hold
+            // of boundary still refer to valid address, just not held
             // by the slice
             if idx1.0 < self.get_row()
                 && idx1.1 < self.get_col()
@@ -28,7 +33,7 @@ impl<'a, T> Slice2DSwap for Slice2DMut<'a, T> {
                     .add(calc_2d_index(idx2.0, idx2.1, self));
                 core::ptr::swap(ptr1, ptr2);
             } else {
-                panic!("out of boundary");
+                panic!("out of range");
             }
         }
     }

@@ -459,7 +459,7 @@ fn slice_2d_swap() {
 }
 
 #[test]
-#[should_panic(expected = "out of boundary")]
+#[should_panic(expected = "out of range")]
 fn slice_2d_swap_out_of_range() {
     const ROW: usize = 4;
     const COL: usize = 5;
@@ -468,4 +468,54 @@ fn slice_2d_swap_out_of_range() {
     let mut sub_slice = vs.get_mut((..ROW - 1, ..COL - 1)).unwrap();
 
     sub_slice.swap((0, 0), (ROW - 1, COL - 1));
+}
+
+#[test]
+fn slice_2d_eq() {
+    const ROW: usize = 5;
+    const COL: usize = 4;
+    let v1 = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+    let mut v2 = (0..(ROW * COL) as i32).collect::<Vec<_>>();
+    let v3 = (1..(ROW * COL + 1) as i32).collect::<Vec<_>>();
+
+    let s1 = Slice2D::from_slice(v1.as_slice(), ROW, COL);
+    let s2 = Slice2D::from_slice(v1.as_slice(), ROW, COL);
+    let s3 = Slice2DMut::from_slice(v2.as_mut_slice(), ROW, COL);
+    let s4 = Slice2D::from_slice(v3.as_slice(), ROW, COL);
+    let s5 = Slice2D::from_slice(v3.as_slice(), COL, ROW);
+
+    assert_eq!(s1, s1);
+    assert_eq!(s1, s2);
+    assert_eq!(s1, s3);
+    assert_ne!(s1, s4);
+    assert_ne!(s1, s5);
+
+    assert_eq!(s2, s1);
+    assert_eq!(s2, s2);
+    assert_eq!(s2, s3);
+    assert_ne!(s2, s4);
+    assert_ne!(s2, s5);
+
+    assert_eq!(s3, s1);
+    assert_eq!(s3, s2);
+    assert_eq!(s3, s3);
+    assert_ne!(s3, s4);
+    assert_ne!(s3, s5);
+
+    assert_ne!(s4, s1);
+    assert_ne!(s4, s2);
+    assert_ne!(s4, s3);
+    assert_eq!(s4, s4);
+    assert_ne!(s4, s5);
+
+    assert_ne!(s5, s1);
+    assert_ne!(s5, s2);
+    assert_ne!(s5, s3);
+    assert_ne!(s5, s4);
+    assert_eq!(s5, s5);
+
+    assert_eq!(
+        s4.get((..ROW.min(COL), 0)).unwrap(),
+        s5.get((..ROW.min(COL), 0)).unwrap()
+    )
 }
