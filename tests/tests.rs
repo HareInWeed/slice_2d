@@ -519,3 +519,127 @@ fn slice_2d_eq() {
         s5.get((..ROW.min(COL), 0)).unwrap()
     )
 }
+
+#[test]
+fn slice_2d_empty() {
+    let mut v1: Vec<i32> = vec![];
+    let mut v2: Vec<()> = vec![];
+
+    let s1: Slice2D<'_, i32> = Default::default();
+    let s2: Slice2DMut<'_, i32> = Default::default();
+    let s3: Slice2D<'_, ()> = Default::default();
+    let s4: Slice2DMut<'_, ()> = Default::default();
+    let s5 = Slice2D::from_slice(v1.as_slice(), 0, 0);
+    let s6 = Slice2D::from_slice(v2.as_slice(), 0, 0);
+
+    assert_eq!(s1.get_shape(), (0, 0));
+    assert_eq!(s2.get_shape(), (0, 0));
+    assert_eq!(s3.get_shape(), (0, 0));
+    assert_eq!(s4.get_shape(), (0, 0));
+    assert_eq!(s5.get_shape(), (0, 0));
+    assert_eq!(s6.get_shape(), (0, 0));
+
+    assert!(s1.is_empty());
+    assert!(s2.is_empty());
+    assert!(s3.is_empty());
+    assert!(s4.is_empty());
+    assert!(s5.is_empty());
+    assert!(s6.is_empty());
+
+    assert_eq!(s1.get((0, 0)), None);
+    assert_eq!(s2.get((0, 0)), None);
+    assert_eq!(s3.get((0, 0)), None);
+    assert_eq!(s4.get((0, 0)), None);
+    assert_eq!(s5.get((0, 0)), None);
+    assert_eq!(s6.get((0, 0)), None);
+
+    assert!(s1.get((.., ..)).unwrap().is_empty());
+    assert!(s2.get((.., ..)).unwrap().is_empty());
+    assert!(s3.get((.., ..)).unwrap().is_empty());
+    assert!(s4.get((.., ..)).unwrap().is_empty());
+    assert!(s5.get((.., ..)).unwrap().is_empty());
+    assert!(s6.get((.., ..)).unwrap().is_empty());
+
+    assert_eq!(s1.row_iter().flatten().count(), 0);
+    assert_eq!(s2.row_iter().flatten().count(), 0);
+    assert_eq!(s3.row_iter().flatten().count(), 0);
+    assert_eq!(s4.row_iter().flatten().count(), 0);
+    assert_eq!(s5.row_iter().flatten().count(), 0);
+    assert_eq!(s6.row_iter().flatten().count(), 0);
+
+    assert_eq!(s1.col_iter().flatten().count(), 0);
+    assert_eq!(s2.col_iter().flatten().count(), 0);
+    assert_eq!(s3.col_iter().flatten().count(), 0);
+    assert_eq!(s4.col_iter().flatten().count(), 0);
+    assert_eq!(s5.col_iter().flatten().count(), 0);
+    assert_eq!(s6.col_iter().flatten().count(), 0);
+
+    let s1 = Slice2DMut::from_slice(v1.as_mut_slice(), 0, 0);
+    let s2 = Slice2DMut::from_slice(v2.as_mut_slice(), 0, 0);
+
+    assert_eq!(s1.get_shape(), (0, 0));
+    assert_eq!(s2.get_shape(), (0, 0));
+
+    assert!(s1.is_empty());
+    assert!(s2.is_empty());
+
+    assert_eq!(s1.get((0, 0)), None);
+    assert_eq!(s2.get((0, 0)), None);
+
+    assert!(s1.get((.., ..)).unwrap().is_empty());
+    assert!(s2.get((.., ..)).unwrap().is_empty());
+
+    assert_eq!(s1.row_iter().flatten().count(), 0);
+    assert_eq!(s2.row_iter().flatten().count(), 0);
+
+    assert_eq!(s1.col_iter().flatten().count(), 0);
+    assert_eq!(s2.col_iter().flatten().count(), 0);
+
+    let mut v1: Vec<i32> = vec![1, 2, 3, 4];
+    let mut v2: Vec<()> = vec![(), (), (), ()];
+    let s1 = Slice2D::from_slice(v1.as_slice(), 2, 2);
+    let s1 = s1.get((0..0, ..)).unwrap();
+    let s2 = Slice2D::from_slice(v2.as_slice(), 2, 2);
+    let s2 = s2.get((.., 0..0)).unwrap();
+
+    assert_eq!(s1.get_shape(), (0, 2));
+    assert_eq!(s2.get_shape(), (2, 0));
+
+    assert!(s1.is_empty());
+    assert!(s2.is_empty());
+
+    assert_eq!(s1.get((0, 0)), None);
+    assert_eq!(s2.get((0, 0)), None);
+
+    assert!(s1.get((.., ..)).unwrap().is_empty());
+    assert!(s2.get((.., ..)).unwrap().is_empty());
+
+    assert_eq!(s1.row_iter().flatten().count(), 0);
+    assert_eq!(s2.row_iter().flatten().count(), 0);
+
+    assert_eq!(s1.col_iter().flatten().count(), 0);
+    assert_eq!(s2.col_iter().flatten().count(), 0);
+
+    let s1 = Slice2DMut::from_slice(v1.as_mut_slice(), 2, 2);
+    let s1 = s1.get((0..0, ..)).unwrap();
+    let s2 = Slice2DMut::from_slice(v2.as_mut_slice(), 2, 2);
+    let s2 = s2.get((.., 0..0)).unwrap();
+
+    assert_eq!(s1.get_shape(), (0, 2));
+    assert_eq!(s2.get_shape(), (2, 0));
+
+    assert!(s1.is_empty());
+    assert!(s2.is_empty());
+
+    assert_eq!(s1.get((0, 0)), None);
+    assert_eq!(s2.get((0, 0)), None);
+
+    assert!(s1.get((.., ..)).unwrap().is_empty());
+    assert!(s2.get((.., ..)).unwrap().is_empty());
+
+    assert_eq!(s1.row_iter().flatten().count(), 0);
+    assert_eq!(s2.row_iter().flatten().count(), 0);
+
+    assert_eq!(s1.col_iter().flatten().count(), 0);
+    assert_eq!(s2.col_iter().flatten().count(), 0);
+}

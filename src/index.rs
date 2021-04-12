@@ -129,9 +129,11 @@ where
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
-            if rs < slice.get_row()
+            if rs <= re
+                && rs <= slice.get_row()
                 && re <= slice.get_row()
-                && cs < slice.get_col()
+                && cs <= ce
+                && cs <= slice.get_col()
                 && ce <= slice.get_col()
             {
                 Some(self.get_unchecked(slice))
@@ -169,9 +171,11 @@ where
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
-            if rs < slice.get_row()
+            if rs <= re
+                && rs <= slice.get_row()
                 && re <= slice.get_row()
-                && cs < slice.get_col()
+                && cs <= ce
+                && cs <= slice.get_col()
                 && ce <= slice.get_col()
             {
                 Some(self.get_unchecked_mut(slice))
@@ -207,7 +211,11 @@ where
     fn get(self, slice: &'a S) -> Option<Self::Ref> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         unsafe {
-            if rs < slice.get_row() && re <= slice.get_row() && self.1 < slice.get_col() {
+            if rs <= re
+                && rs <= slice.get_row()
+                && re <= slice.get_row()
+                && self.1 < slice.get_col()
+            {
                 Some(self.get_unchecked(slice))
             } else {
                 None
@@ -240,7 +248,11 @@ where
     fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         let (rs, re) = calc_2d_range(slice.get_row(), &self.0);
         unsafe {
-            if rs < slice.get_row() && re <= slice.get_row() && self.1 < slice.get_col() {
+            if rs <= re
+                && rs <= slice.get_row()
+                && re <= slice.get_row()
+                && self.1 < slice.get_col()
+            {
                 Some(self.get_unchecked_mut(slice))
             } else {
                 None
@@ -274,7 +286,11 @@ where
     fn get(self, slice: &'a S) -> Option<Self::Ref> {
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
-            if self.0 < slice.get_row() && cs < slice.get_col() && ce <= slice.get_col() {
+            if self.0 < slice.get_row()
+                && cs <= ce
+                && cs <= slice.get_col()
+                && ce <= slice.get_col()
+            {
                 Some(self.get_unchecked(slice))
             } else {
                 None
@@ -307,7 +323,11 @@ where
     fn get_mut(self, slice: &'a mut S) -> Option<Self::RefMut> {
         let (cs, ce) = calc_2d_range(slice.get_col(), &self.1);
         unsafe {
-            if self.0 < slice.get_row() && cs < slice.get_col() && ce <= slice.get_col() {
+            if self.0 < slice.get_row()
+                && cs <= ce
+                && cs <= slice.get_col()
+                && ce <= slice.get_col()
+            {
                 Some(self.get_unchecked_mut(slice))
             } else {
                 None

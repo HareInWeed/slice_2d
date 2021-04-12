@@ -1,4 +1,7 @@
-use crate::iter::Slice2DIterMut;
+use crate::{
+    iter::Slice2DIterMut,
+    slice::{Shape2D, SlicePtrMut},
+};
 
 pub trait Slice2DFill<T> {
     fn fill(&mut self, value: T)
@@ -11,7 +14,7 @@ pub trait Slice2DFill<T> {
 
 impl<T: Clone, S> Slice2DFill<T> for S
 where
-    S: Slice2DIterMut<T>,
+    S: Shape2D + SlicePtrMut<T> + Slice2DIterMut<T, S>,
 {
     #[inline]
     fn fill(&mut self, value: T)

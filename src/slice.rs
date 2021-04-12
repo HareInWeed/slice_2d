@@ -7,6 +7,7 @@ pub trait Shape2D {
 }
 pub trait Shape2DExt: Shape2D {
     fn get_shape(&self) -> (usize, usize);
+    fn is_empty(&self) -> bool;
 }
 impl<S> Shape2DExt for S
 where
@@ -15,6 +16,9 @@ where
     #[inline(always)]
     fn get_shape(&self) -> (usize, usize) {
         (self.get_row(), self.get_col())
+    }
+    fn is_empty(&self) -> bool {
+        self.get_row() == 0 || self.get_col() == 0
     }
 }
 
@@ -57,16 +61,16 @@ impl<T> Default for Slice2DRaw<T> {
     }
 }
 
-impl<T> SlicePtr<T> for Slice2DRaw<T> {
-    fn get_slice_ptr(&self) -> *const T {
-        self.slice
-    }
-}
-impl<T> SlicePtrMut<T> for Slice2DRaw<T> {
-    fn get_slice_ptr_mut(&self) -> *mut T {
-        self.slice as *mut T
-    }
-}
+// impl<T> SlicePtr<T> for Slice2DRaw<T> {
+//     fn get_slice_ptr(&self) -> *const T {
+//         self.slice
+//     }
+// }
+// impl<T> SlicePtrMut<T> for Slice2DRaw<T> {
+//     fn get_slice_ptr_mut(&self) -> *mut T {
+//         self.slice as *mut T
+//     }
+// }
 
 pub trait Slice2DRawRef {
     type DataT;
@@ -122,7 +126,7 @@ pub struct Slice2D<'a, T> {
 }
 
 impl<'a, T> Slice2D<'a, T> {
-    pub fn from_slice<'b>(slice: &'b [T], row: usize, col: usize) -> Slice2D<'b, T> {
+    pub fn from_slice(slice: &[T], row: usize, col: usize) -> Slice2D<'_, T> {
         assert!(
             row * col <= slice.len(),
             "slice does not contain enough space."
@@ -173,7 +177,7 @@ pub struct Slice2DMut<'a, T> {
 }
 
 impl<'a, T> Slice2DMut<'a, T> {
-    pub fn from_slice<'b>(slice: &'b mut [T], row: usize, col: usize) -> Slice2DMut<'b, T> {
+    pub fn from_slice(slice: &mut [T], row: usize, col: usize) -> Slice2DMut<'_, T> {
         assert!(
             row * col <= slice.len(),
             "slice does not contain enough space."
