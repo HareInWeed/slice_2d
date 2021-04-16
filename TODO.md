@@ -1,8 +1,14 @@
 # TODO
 
+- [ ] FIXME: handle zst properly
 - [x] `PartialEq` and `Eq` trait
+- [ ] dedicated `Hash` impl for `Slice2D` & `Slice2DMut`
 - [ ] iterator related
-  - [ ] `IntoIterator` trait
+  - [ ] `Iterator` trait
+    - [ ] `size_hint`
+  - [ ] `ExactIterator` trait
+  - [ ] `FusedIterator` trait
+  - [ ] `IntoIterator` impl for `Slice2D` & `Slice2DMut`
 - [ ] more split methods
   - [ ] `split_parts`
   - [ ] `split_at_multiple`

@@ -223,6 +223,12 @@ fn slice_2d_slice_mut() {
             15, 16, 17, 18, 19, // row 4
         ]
     );
+
+    let mut v = vec![(); ROW * COL];
+    let mut vs = Slice2DMut::from_slice(v.as_mut_slice(), ROW, COL);
+
+    assert_eq!(vs.row_iter_mut().flatten().count(), ROW * COL);
+    assert_eq!(vs.col_iter_mut().flatten().count(), ROW * COL);
 }
 
 #[test]
@@ -231,29 +237,33 @@ fn slice_2d_split() {
     const COL: usize = 5;
     const R: usize = 2;
     const C: usize = 3;
-    let v = (0..(ROW * COL) as i32).collect::<Vec<_>>();
-    let vs = Slice2D::from_slice(v.as_slice(), ROW, COL);
-    assert!(vs.split_at_horizontally(0).is_some());
-    assert!(vs.split_at_horizontally(ROW + 1).is_none());
-    assert!(vs.split_at_vertically(0).is_some());
-    assert!(vs.split_at_vertically(COL + 1).is_none());
-    assert!(vs.split_at((ROW + 1, COL)).is_none());
-    assert!(vs.split_at((ROW, COL + 1)).is_none());
-    assert!(vs.split_at((ROW + 1, COL + 1)).is_none());
 
-    let [t, b] = vs.split_at_horizontally(R).unwrap();
-    assert_eq!(t.get_shape(), (R, COL));
-    assert_eq!(b.get_shape(), (ROW - R, COL));
+    fn test<T>(v: Vec<T>) {
+        let vs = Slice2D::from_slice(v.as_slice(), ROW, COL);
+        assert!(vs.split_at_horizontally(0).is_some());
+        assert!(vs.split_at_horizontally(ROW + 1).is_none());
+        assert!(vs.split_at_vertically(0).is_some());
+        assert!(vs.split_at_vertically(COL + 1).is_none());
+        assert!(vs.split_at((ROW + 1, COL)).is_none());
+        assert!(vs.split_at((ROW, COL + 1)).is_none());
+        assert!(vs.split_at((ROW + 1, COL + 1)).is_none());
 
-    let [l, r] = vs.split_at_vertically(C).unwrap();
-    assert_eq!(l.get_shape(), (ROW, C));
-    assert_eq!(r.get_shape(), (ROW, COL - C));
+        let [t, b] = vs.split_at_horizontally(R).unwrap();
+        assert_eq!(t.get_shape(), (R, COL));
+        assert_eq!(b.get_shape(), (ROW - R, COL));
 
-    let [[tl, tr], [bl, br]] = vs.split_at((R, C)).unwrap();
-    assert_eq!(tl.get_shape(), (R, C));
-    assert_eq!(tr.get_shape(), (R, COL - C));
-    assert_eq!(bl.get_shape(), (ROW - R, C));
-    assert_eq!(br.get_shape(), (ROW - R, COL - C));
+        let [l, r] = vs.split_at_vertically(C).unwrap();
+        assert_eq!(l.get_shape(), (ROW, C));
+        assert_eq!(r.get_shape(), (ROW, COL - C));
+
+        let [[tl, tr], [bl, br]] = vs.split_at((R, C)).unwrap();
+        assert_eq!(tl.get_shape(), (R, C));
+        assert_eq!(tr.get_shape(), (R, COL - C));
+        assert_eq!(bl.get_shape(), (ROW - R, C));
+        assert_eq!(br.get_shape(), (ROW - R, COL - C));
+    }
+    test((0..(ROW * COL) as i32).collect::<Vec<_>>());
+    test(vec![(); ROW * COL]);
 }
 
 #[test]
